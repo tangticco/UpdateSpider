@@ -54,7 +54,7 @@ def checkUpdate(f):
 
 		try:
 			response = requests.get(appurl)
-			page = bs4.BeautifulSoup(response.text)
+			page = bs4.BeautifulSoup(response.text, "html.parser")
 			updates = {}
 			count = 0
 			for verHist in page.find_all('li'):
@@ -66,6 +66,7 @@ def checkUpdate(f):
 						updateHistory[appName] = date
 						count+=1
 						f.write(appName + " " + date + " \n")
+						break
 
 
 
@@ -76,6 +77,9 @@ def checkUpdate(f):
 
 
 def constructAppUrls():
+	"""
+	This is a method to intially construct the app's urls
+	"""
 	aurl = "https://itunes.apple.com/us/genre/ios/id36?mt=8"
 	try:
 		response = requests.get(aurl)
@@ -118,9 +122,9 @@ def constructAppUrls():
 def main():
 
 	#constructAppUrls()
-	f= open("initial.txt","w+")
-	scrapeDates(f)
-	f.close()
+	# f= open("initial.txt","w+")
+	# scrapeDates(f)
+	# f.close()
 
 
 	base = "updates"
@@ -140,5 +144,5 @@ def main():
 		f = open(fileName, "w")
 		checkUpdate(f)
 		f.close()
-		time.sleep(3600)
+		time.sleep(1200)
 main()

@@ -129,15 +129,17 @@ def main():
 
 	base = "updates"
 	postfix = ".txt"
-	fileName = base + str(datetime.now()) + postfix
+	count = 1
+	fileName = base + str(count) + postfix
 	f = open(fileName, "w")
 	f.close()
 	while True:
 		statinfo = os.stat(fileName)
 		size = statinfo.st_size
 
-		if size > 5000000:
-			fileName = base + str(datetime.now()) + postfix
+		if size > 1000000:
+			count +=1
+			fileName = base + str(count) + postfix
 			f = open(fileName, "w")
 			f.close()
 

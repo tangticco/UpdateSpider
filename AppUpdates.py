@@ -9,45 +9,86 @@ from datetime import datetime
 updateHistory = {}
 apps = {}
 
+#helper
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+	"""
+	Call in a loop to create terminal progress bar
+	@params:
+		iteration   - Required  : current iteration (Int)
+		total       - Required  : total iterations (Int)
+		prefix      - Optional  : prefix string (Str)
+		suffix      - Optional  : suffix string (Str)
+		decimals    - Optional  : positive number of decimals in percent complete (Int)
+		length      - Optional  : character length of bar (Int)
+		fill        - Optional  : bar fill character (Str)
+	"""
+	percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+	filledLength = int(length * iteration // total)
+	bar = fill * filledLength + '-' * (length - filledLength)
+	print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+	# Print New Line on Complete
+	if iteration == total:
+		print()
+
 #Scrape app store page for update dates
 def scrapeDates(f):
 
 	appf = open("appUrls.txt", "r")
+	l = 7868
+	printProgressBar(0, l, prefix = 'Initialize:', suffix = 'Complete', length = 50)
+	for i, line in enumerate(appf):
+		if i > -1: #a dirty shortcut since the file already has up to 4603
+			appInfo = line.split(" XXXXXXXXXX ")
+			appName = appInfo[0]
+			appurl = appInfo[1]
+			genre = "unknown"
+			try:
+				response = requests.get(appurl)
+				page = bs4.BeautifulSoup(response.text, "html.parser")
+				updates = {}
+				count = 0
 
-	for line in appf:
-		appInfo = line.split(" XXXXXXXXXX ")
-		appName = appInfo[0]
-		appurl = appInfo[1]
+				for link in page.find_all('a'):
+					if 'https://itunes.apple.com/us/genre' in link['href']:
+						genre = link.string.extract()
 
-		try:
-			response = requests.get(appurl)
-			page = bs4.BeautifulSoup(response.text)
-			updates = {}
-			count = 0
-			for verHist in page.find_all('li'):
-				if(verHist['class'] == ['version-history__item']):
-					version = verHist.contents[1].string
-					date = verHist.contents[3].string
-
-					if count == 0:
-						updateHistory[appName] = date
-						count+=1
-
-					f.write(appName + " " + date + " \n")
+				for verHist in page.find_all('li'):
+					if(verHist['class'] == ['version-history__item']):
+						version = verHist.contents[1].string
+						date = verHist.contents[3].string
+						if count == 0:
+							updateHistory[appName] = date
+							count+=1
+						f.write(appName + " XXXXXXXXXX " + date + " XXXXXXXXXX " + genre + " \n")
 
 
+			except requests.exceptions.RequestException as e:
+				pass
+		printProgressBar(i+1, l, prefix = 'Initialize:', suffix = 'Complete', length = 50)
 
-		except requests.exceptions.RequestException as e:
-			pass
 
 	appf.close()
+
+
+def constructupdateHistory():
+	f = open("initial.txt", "r")
+	for line in f:
+		appInfo = line.split(" XXXXXXXXXX ")
+		appName = appInfo[0]
+		appdate = appInfo[1]
+
+		if not appName in updateHistory:
+			updateHistory[appName] = appdate
+
+	f.close()
 
 
 
 def checkUpdate(f):
 	appf = open("appUrls.txt", "r")
-
-	for line in appf:
+	l = 7868
+	printProgressBar(0, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
+	for i, line in enumerate(appf):
 		appInfo = line.split(" XXXXXXXXXX ")
 		appName = appInfo[0]
 		appurl = appInfo[1]
@@ -72,6 +113,7 @@ def checkUpdate(f):
 
 		except requests.exceptions.RequestException as e:
 			pass
+		printProgressBar(i+1, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
 
 	appf.close()
 
@@ -122,9 +164,13 @@ def constructAppUrls():
 def main():
 
 	#constructAppUrls()
-	# f= open("initial.txt","w+")
-	# scrapeDates(f)
-	# f.close()
+	f= open("initial.txt","w+")
+	scrapeDates(f)
+	f.close()
+
+	constructupdateHistory()
+
+	print("Finish Initial Update History Construct")
 
 
 	base = "updates"
@@ -136,7 +182,6 @@ def main():
 	while True:
 		statinfo = os.stat(fileName)
 		size = statinfo.st_size
-
 		if size > 1000000:
 			count +=1
 			fileName = base + str(count) + postfix

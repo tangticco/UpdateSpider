@@ -89,30 +89,31 @@ def checkUpdate(f):
 	l = 7868
 	printProgressBar(0, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
 	for i, line in enumerate(appf):
-		appInfo = line.split(" XXXXXXXXXX ")
-		appName = appInfo[0]
-		appurl = appInfo[1]
+		if i > 2579:
+			appInfo = line.split(" XXXXXXXXXX ")
+			appName = appInfo[0]
+			appurl = appInfo[1]
 
-		try:
-			response = requests.get(appurl)
-			page = bs4.BeautifulSoup(response.text, "html.parser")
-			updates = {}
-			count = 0
-			for verHist in page.find_all('li'):
-				if(verHist['class'] == ['version-history__item']):
-					version = verHist.contents[1].string
-					date = verHist.contents[3].string
+			try:
+				response = requests.get(appurl)
+				page = bs4.BeautifulSoup(response.text, "html.parser")
+				updates = {}
+				count = 0
+				for verHist in page.find_all('li'):
+					if(verHist['class'] == ['version-history__item']):
+						version = verHist.contents[1].string
+						date = verHist.contents[3].string
 
-					if count == 0 and date != updateHistory[appName]: #there is a new update
-						updateHistory[appName] = date
-						count+=1
-						f.write(appName + " " + date + " \n")
-						break
+						if count == 0 and date != updateHistory[appName]: #there is a new update
+							updateHistory[appName] = date
+							count+=1
+							f.write(appName + " " + date + " \n")
+							break
 
 
 
-		except requests.exceptions.RequestException as e:
-			pass
+			except requests.exceptions.RequestException as e:
+				pass
 		printProgressBar(i+1, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
 
 	appf.close()
@@ -164,7 +165,7 @@ def constructAppUrls():
 def main():
 
 	#constructAppUrls()
-	f= open("initial.txt","w+")
+	f= open("initial.txt","a")
 	scrapeDates(f)
 	f.close()
 

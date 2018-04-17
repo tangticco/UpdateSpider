@@ -3,6 +3,10 @@ import requests
 import os
 import time
 import datetime
+
+updateHistory = {}
+appGenere = {}
+
 ############   Helpers   ###############
 
 
@@ -69,6 +73,8 @@ def reconfigureAppUrls():
 	part of the initialization process. Not used later
 	"""
 
+	constructupdateHistory()
+
 	appf = open("appUrls.txt", "r")
 	tempFile = open("appUrlsTemp.txt", "w")
 	l = 7868
@@ -76,11 +82,11 @@ def reconfigureAppUrls():
 	for i, line in enumerate(appf):
 		appInfo = line.split(" XXXXXXXXXX ")
 		appName = appInfo[0]
-		appurl = appInfo[1]
+		appurl = appInfo[1].replace("\n", "")
 		if appName in updateHistory:
 			latestUpdate = updateHistory[appName]
 			appGe = appGenere[appName]
-			tempFile.write(appName + " XXXXXXXXXX " + appurl + " XXXXXXXXXX " + latestUpdate + " XXXXXXXXXX " + appGe)
+			tempFile.write(appName + " || " + appurl + " || " + latestUpdate + " || " + appGe)
 		else:
 			try:
 				response = requests.get(appurl)

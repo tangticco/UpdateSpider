@@ -15,21 +15,23 @@ month = {"Jan": 1, "Feb" : 2, "Mar": 3, "Apr" : 4, "May" : 5, "Jun" : 6, "Jul": 
 
 def checkUpdate(f):
 	appf = open("appUrls.txt", "r")
+
 	l = 7868
 
 	# Start a new temp file to refresh the appUrls.txt
 	tempFile = open("appUrlsTemp.txt", "w")
 
+
 	# Start the checking update process
-	library.printProgressBar(0, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
+	library.printProgressBar(0, l, prefix = 'Check Update Progress:', suffix = 'Complete', length = 50)
 	for i, line in enumerate(appf):
 
 		#get the infos of an app
-		appInfo = line.split(" XXXXXXXXXX ")
+		appInfo = line.split(" || ")
 		appName = appInfo[0]
 		appurl = appInfo[1]
 		latestUpdate = appInfo[2]
-		appGe = appInfo[3]
+		appGe = appInfo[3].replace("\n", "")
 
 		#now search the web page to see if there is a new update
 		try:
@@ -45,19 +47,19 @@ def checkUpdate(f):
 
 					if library.compareDate(date, latestUpdate): #there is a new update
 						updateHistory[appName] = date
-						f.write(appName + " XXXXXXXXXX " + date + " XXXXXXXXXX " + appGe + " \n")
+						f.write(appName + " || " + date + " || " + appGe + " \n")
 
 						#write the newest update to the tempfile
-						tempFile.write(appName + " XXXXXXXXXX " + appurl + " XXXXXXXXXX " + latestUpdate + " XXXXXXXXXX " + appGe)
+						tempFile.write(appName + " || " + appurl + " || " + latestUpdate + " || " + appGe)
 						does_appUrls_has_latest_update = False
 						break
 
 			if does_appUrls_has_latest_update:
-				tempFile.write(appName + " XXXXXXXXXX " + appurl + " XXXXXXXXXX " + latestUpdate + " XXXXXXXXXX " + appGe)
+				tempFile.write(appName + " || " + appurl + " || " + latestUpdate + " || " + appGe)
 
 		except requests.exceptions.RequestException as e:
 			pass
-		library.printProgressBar(i+1, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
+		library.printProgressBar(i+1, l, prefix = 'Check Update Progress:', suffix = 'Complete', length = 50)
 
 	appf.close()
 	tempFile.close()
@@ -74,6 +76,7 @@ def main():
 	# f= open("initial.txt","a")
 	# scrapeDates(f)
 	# f.close()
+	#library.reconfigureAppUrls()
 
 	########### Actual Update starts #############
 	base = "updates"
@@ -94,8 +97,11 @@ def main():
 			f = open(fileName, "w")
 			f.close()
 
+		#open the file to write updates, the write method is append. (avoid overwrite existing data)
 		f = open(fileName, "a")
 		checkUpdate(f)
 		f.close()
-		time.sleep(43200)
+		for i in range(43200):
+			library.printProgressBar(i+1, 43200, prefix = 'Waiting for next update:', suffix = 'Time to check!', length = 50)
+			time.sleep(1)
 main()

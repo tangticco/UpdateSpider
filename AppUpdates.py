@@ -37,7 +37,7 @@ def scrapeDates(f):
 	l = 7868
 	printProgressBar(0, l, prefix = 'Initialize:', suffix = 'Complete', length = 50)
 	for i, line in enumerate(appf):
-		if i > 2579:
+		if i > 6367:
 			appInfo = line.split(" XXXXXXXXXX ")
 			appName = appInfo[0]
 			appurl = appInfo[1]

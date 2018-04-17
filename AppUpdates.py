@@ -7,7 +7,9 @@ from datetime import datetime
 
 
 updateHistory = {}
+appGenere = {}
 apps = {}
+month = {"Jan": 1, "Feb" : 2, "Mar": 3, "Apr" : 4, "May" : 5, "Jun" : 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
 
 #helper
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
@@ -29,6 +31,17 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 	# Print New Line on Complete
 	if iteration == total:
 		print()
+
+def compareDate(date1, date2):
+	"""
+	This method takes two dates in the format like Jul 2, 2015 and parse it into a datetime in order to compare them
+	rtype: bool
+	return: if date1 is later then date2 then return True, if not return false
+	"""
+	da1 = datetime.datetime.strptime(date1, "%b %d, %Y")
+	da2 = datetime.datetime.strptime(date2, "%b %d, %Y")
+
+	return True if da1 > da2 else False
 
 #Scrape app store page for update dates
 def scrapeDates(f):
@@ -76,10 +89,14 @@ def constructupdateHistory():
 		appInfo = line.split(" XXXXXXXXXX ")
 		appName = appInfo[0]
 		appdate = appInfo[1]
-
+		appGe = appInfo[2]
+		#ensure that updateHistory contains the latest update
 		if not appName in updateHistory:
 			updateHistory[appName] = appdate
-
+			appGenere[appName] = appGe
+		else:
+			if compareDate(appdate, updateHistory[appName]):
+				updateHistory[appName] = appdate
 	f.close()
 
 
@@ -97,7 +114,6 @@ def checkUpdate(f):
 			response = requests.get(appurl)
 			page = bs4.BeautifulSoup(response.text, "html.parser")
 			updates = {}
-			count = 0
 			for verHist in page.find_all('li'):
 				if(verHist['class'] == ['version-history__item']):
 					version = verHist.contents[1].string
@@ -116,6 +132,45 @@ def checkUpdate(f):
 		printProgressBar(i+1, l, prefix = 'Update Progress:', suffix = 'Complete', length = 50)
 
 	appf.close()
+
+def reconfigureAppUrls():
+	appf = open("appUrls.txt", "r")
+	tempFile = open("appUrlsTemp.txt", "w")
+	l = 7868
+	printProgressBar(0, l, prefix = 'Reconfigure Update Progress:', suffix = 'Complete', length = 50)
+	for i, line in enumerate(appf):
+		appInfo = line.split(" XXXXXXXXXX ")
+		appName = appInfo[0]
+		appurl = appInfo[1]
+		if appName in updateHistory:
+			latestUpdate = updateHistory[appName]
+			appGe = appGenere[appName]
+			tempFile.write(appName + " XXXXXXXXXX " + appurl + " XXXXXXXXXX " + latestUpdate + " XXXXXXXXXX " + appGe)
+		else:
+			try:
+				response = requests.get(appurl)
+				page = bs4.BeautifulSoup(response.text, "html.parser")
+				updates = {}
+				for verHist in page.find_all('li'):
+					if(verHist['class'] == ['version-history__item']):
+						version = verHist.contents[1].string
+						date = verHist.contents[3].string
+
+						if not appName in updateHistory:
+							updateHistory[appName] = date
+							appGenere[appName] = "unknown"
+						else:
+							if compareDate(date, updateHistory[appName]):
+								updateHistory[appName] = appdate
+			except requests.exceptions.RequestException as e:
+				pass
+		printProgressBar(i+1, l, prefix = 'Reconfigure Update Progress:', suffix = 'Complete', length = 50)
+
+	appf.close()
+	tempFile.close()
+
+	os.system("mv appUrls.txt appUrls_backup.txt")
+	os.system("mv appUrlsTemp.txt appUrls.txt")
 
 
 def constructAppUrls():
@@ -163,33 +218,36 @@ def constructAppUrls():
 
 def main():
 
-	#constructAppUrls()
-	f= open("initial.txt","a")
-	scrapeDates(f)
-	f.close()
+	########### The initialization part##########
+	# #constructAppUrls()
+	# f= open("initial.txt","a")
+	# scrapeDates(f)
+	# f.close()
 
+
+	########### Actual Update starts #############
 	constructupdateHistory()
 
 	print("Finish Initial Update History Construct")
 
-
-	base = "updates"
-	postfix = ".txt"
-	count = 1
-	fileName = base + str(count) + postfix
-	f = open(fileName, "w")
-	f.close()
-	while True:
-		statinfo = os.stat(fileName)
-		size = statinfo.st_size
-		if size > 1000000:
-			count +=1
-			fileName = base + str(count) + postfix
-			f = open(fileName, "w")
-			f.close()
-
-		f = open(fileName, "w")
-		checkUpdate(f)
-		f.close()
-		time.sleep(1200)
+	reconfigureAppUrls()
+	# base = "updates"
+	# postfix = ".txt"
+	# count = 1
+	# fileName = base + str(count) + postfix
+	# f = open(fileName, "w")
+	# f.close()
+	# while True:
+	# 	statinfo = os.stat(fileName)
+	# 	size = statinfo.st_size
+	# 	if size > 1000000:
+	# 		count +=1
+	# 		fileName = base + str(count) + postfix
+	# 		f = open(fileName, "w")
+	# 		f.close()
+	#
+	# 	f = open(fileName, "w")
+	# 	checkUpdate(f)
+	# 	f.close()
+	# 	time.sleep(1200)
 main()

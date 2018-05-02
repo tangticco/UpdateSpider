@@ -44,7 +44,6 @@ def checkUpdate(f):
 				if(verHist['class'] == ['version-history__item']):
 					version = verHist.contents[1].string
 					date = verHist.contents[3].string
-
 					if library.compareDate(date, latestUpdate): #there is a new update
 						updateHistory[appName] = date
 						f.write(appName + " || " + date + " || " + appGe + " \n")
@@ -52,7 +51,7 @@ def checkUpdate(f):
 						#write the newest update to the tempfile
 						tempFile.write(appName + " || " + appurl + " || " + latestUpdate + " || " + appGe)
 						does_appUrls_has_latest_update = False
-						break
+					break
 
 			if does_appUrls_has_latest_update:
 				tempFile.write(appName + " || " + appurl + " || " + latestUpdate + " || " + appGe)
@@ -64,8 +63,12 @@ def checkUpdate(f):
 	appf.close()
 	tempFile.close()
 
-	os.system("mv appUrls.txt appUrls_backup.txt")
-	os.system("mv appUrlsTemp.txt appUrls.txt")
+	lineCount = os.popen("wc -l appUrlsTemp.txt").read()
+	if not "7793" in lineCount:
+		print(lineCount)
+	else:
+		os.system("mv appUrls.txt appUrls_backup.txt")
+		os.system("mv appUrlsTemp.txt appUrls.txt")
 
 
 
